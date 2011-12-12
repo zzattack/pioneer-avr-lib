@@ -1,0 +1,14 @@
+*.user
+*.suo
+*.opensdf
+*.sdf
+*.exe
+*.manifest
+*.pdb
+*.tlog
+*.obj
+*.exp
+bin
+obj
+Debug
+Release
