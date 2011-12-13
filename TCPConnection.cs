@@ -6,22 +6,21 @@ using System.Net.Sockets;
 using System.Net;
 
 namespace PioneerAvrControlLib {
-	class TCPConnection : PioneerConnection {
+	public class TCPConnection : PioneerConnection {
 		TcpClient tcp;
-		IPEndPoint ipe;
 		NetworkStream stream;
 		byte[] readBuf = new byte[1024];
+		string ip;
+		int port;
 
-		public TCPConnection(string ip, int port = 23)
-			: this(new IPEndPoint(IPAddress.Parse(ip), port)) {
+		public TCPConnection(string ip, int port = 23) {
+			this.ip = ip;
+			this.port = port;
+			this.tcp = new TcpClient();
 		}
-
-		public TCPConnection(IPEndPoint ip) {
-			this.ipe = ip;
-		}
-
-		protected override void Open() {
-			tcp.Connect(ipe);
+		
+		public override void Open() {
+			tcp.Connect(ip, port);
 			stream = tcp.GetStream();
 			stream.BeginRead(readBuf, 0, readBuf.Length, OnDataReceived, null);
 		}
@@ -31,6 +30,8 @@ namespace PioneerAvrControlLib {
 			byte[] b = new byte[bytesRead];
 			Array.Copy(readBuf, b, bytesRead);
 			AddToBuffer(b);
+			
+			stream.BeginRead(readBuf, 0, readBuf.Length, OnDataReceived, null);
 		}
 
 		protected override void Write(IEnumerable<byte> b) {

@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PioneerAvrControlLib", "PioneerAvrControlLib.csproj", "{BEF5D89E-ACBF-4B82-96D0-6F5CAA8C8EBC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PioneerAvrControlLibTest", "..\PioneerAvrControlLibTest\PioneerAvrControlLibTest.csproj", "{DA297684-C9BD-43B9-8AF5-8ECC69B32D90}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{BEF5D89E-ACBF-4B82-96D0-6F5CAA8C8EBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BEF5D89E-ACBF-4B82-96D0-6F5CAA8C8EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BEF5D89E-ACBF-4B82-96D0-6F5CAA8C8EBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA297684-C9BD-43B9-8AF5-8ECC69B32D90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA297684-C9BD-43B9-8AF5-8ECC69B32D90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA297684-C9BD-43B9-8AF5-8ECC69B32D90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA297684-C9BD-43B9-8AF5-8ECC69B32D90}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

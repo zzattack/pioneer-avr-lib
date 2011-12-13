@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using PioneerAvrControlLib.Message;
 
 namespace PioneerAvrControlLib {
-	abstract class PioneerConnection {
 
-		protected abstract void Open();
+	public abstract class PioneerConnection {
+
+		public abstract void Open();
 		protected abstract void Write(IEnumerable<byte> b);
 
 		List<byte> rawBuff = new List<byte>();
@@ -25,6 +27,7 @@ namespace PioneerAvrControlLib {
 
 		private void ProcesBuffer() {
 			PioneerMessage mess = PioneerMessageFactory.Deserialize(rawBuff);
+			System.Diagnostics.Debug.WriteLine(mess.ToString());
 		}
 
 	}

@@ -21,7 +21,7 @@ namespace PioneerAvrControlLib {
 			sp.DataReceived += new SerialDataReceivedEventHandler(sp_DataReceived);
 		}
 
-		protected override void Open() {
+		public override void Open() {
 			sp.Open();
 		}
 
