@@ -44,6 +44,7 @@
     <Compile Include="MessageFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerialPortConnection.cs" />
+    <Compile Include="StringHelper.cs" />
     <Compile Include="TCPConnection.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

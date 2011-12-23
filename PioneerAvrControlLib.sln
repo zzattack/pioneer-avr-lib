@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PioneerAvrControlLib", "PioneerAvrControlLib.csproj", "{BEF5D89E-ACBF-4B82-96D0-6F5CAA8C8EBC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PioneerAvrControlLib", "PioneerAvrControlLib\PioneerAvrControlLib.csproj", "{BEF5D89E-ACBF-4B82-96D0-6F5CAA8C8EBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PioneerAvrControlLibTest", "..\PioneerAvrControlLibTest\PioneerAvrControlLibTest.csproj", "{DA297684-C9BD-43B9-8AF5-8ECC69B32D90}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PioneerAvrControlLibTest", "PioneerAvrControlLibTest\PioneerAvrControlLibTest.csproj", "{DA297684-C9BD-43B9-8AF5-8ECC69B32D90}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

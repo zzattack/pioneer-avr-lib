@@ -49,8 +49,19 @@ namespace PioneerAvrControlLib.Message {
 		MC,	// Mcacc memory
 		IS,	// Phase control  
 		HA,	// Hdmi audio
-		PR,	// Tuner preset 
-		FR,	// Tuner frequency
+		// ------------------------------
+		TFI, // tuner freq increment
+		TFD, // tuner freq decrement
+		TPI, // tuner preset increment
+		TPD, // tuner freq decrement
+		TB, // tuner band
+		TC, // tuner class
+		TAC, // tuner access
+		TP, // tuner preset?
+		PR,	// Tuner preset !
+		FR,	// Tuner frequency!
+		TN,	// Tuner command
+		// ------------------------------
 		XM,	// Xm channel
 		SIR,	// Sirius channel
 		APR,	// Zone 2 power  
@@ -139,15 +150,19 @@ namespace PioneerAvrControlLib.Message {
 		VPA,	// Video parameter
 		HM,	// Home menu
 		TQ,	// Tuner preset name
-		SSN,	// Hdmi setting		
+		SSN, // Hdmi setting
+		// ------------------------------	
+		R, // Command ok
 		E04, // Command error
 		E06, // Parameter error
 		B00, // Busy
+		// ------------------------------
 	}
 
 	public abstract class PioneerMessage {
 		public abstract MessageType Type { get; }
 		protected List<string> parameters = new List<string>();
+		public abstract string Serialize();
 	}
 
 	public abstract class PioneerResponseMessage : PioneerMessage {
@@ -167,10 +182,14 @@ namespace PioneerAvrControlLib.Message {
 			}
 		}
 		protected PioneerResponseMessage() { }
+
+		public override string Serialize() {
+			throw new InvalidOperationException("Tried to serialize a response message");
+		}
 	}
 
 	public abstract class PioneerRequestMessage : PioneerMessage {
-		public virtual string Serialize() {
+		public override string Serialize() {
 			// format: ?<type><param1><param2>...<crlf>
 			StringBuilder sb = new StringBuilder();
 			sb.Append('?');
@@ -183,7 +202,7 @@ namespace PioneerAvrControlLib.Message {
 	}
 
 	public abstract class PioneerCommandMessage : PioneerMessage {
-		public virtual string Serialize() {
+		public override string Serialize() {
 			// format: <param1><param2>...<type><crlf>
 			StringBuilder sb = new StringBuilder();
 			foreach (string s in parameters)
@@ -252,6 +271,7 @@ namespace PioneerAvrControlLib.Message {
 				throw new ArgumentException("Volume must be between 0 (-80dB) and 185 (+12dB)");
 			this.parameters.Add(volume.ToString().PadLeft(3, '0'));
 		}
+		public VolumeSet() { }
 	}
 	public class VolumeRequest : PioneerRequestMessage {
 		public override MessageType Type {
@@ -314,16 +334,16 @@ namespace PioneerAvrControlLib.Message {
 
 	#region Input messages
 	public enum InputType {
-		PHONO = 0,
+		Phono = 0,
 		CD = 1,
-		TUNER = 2,
-		CDR_TAPE = 3,
+		Tuner = 2,
+		CDr_Tape = 3,
 		DVD = 4,
-		TV_SAT = 5,
-		VIDEO_1 = 10,
-		VIDEO_2 = 14,
+		TV_Satelite = 5,
+		Video_1 = 10,
+		Video_2 = 14,
 		DVR_BDR = 15,
-		IPOD_USB = 17,
+		IPod_USB = 17,
 		XM_RADIO = 18,
 		HDMI_1 = 19,
 		HDMI_2 = 20,
@@ -331,10 +351,10 @@ namespace PioneerAvrControlLib.Message {
 		HDMI_4 = 22,
 		HDMI_5 = 23,
 		BD = 25,
-		HOME_MEDIA_GALLERY = 26,
-		SIRIUS = 27,
-		HDMI_CYCLIC = 31,
-		ADAPTER_PORT = 33
+		Home_Media_Gallery = 26,
+		Sirius = 27,
+		HDMI_Cyclic = 31,
+		Adapter_Port = 33
 	}
 
 	public class InputTypeChange : PioneerCommandMessage {
@@ -344,6 +364,7 @@ namespace PioneerAvrControlLib.Message {
 		public InputTypeChange(InputType input) {
 			this.parameters.Add(input.ToString().PadLeft(2, '0'));
 		}
+		public InputTypeChange() { }
 	}
 	public class InputTypeChangeNext : PioneerCommandMessage {
 		public override MessageType Type {
@@ -355,7 +376,7 @@ namespace PioneerAvrControlLib.Message {
 			get { return MessageType.FD; }
 		}
 	}
-	public class InputTypeRequest : PioneerCommandMessage {
+	public class InputTypeRequest : PioneerRequestMessage {
 		public override MessageType Type {
 			get { return MessageType.F; }
 		}
@@ -369,7 +390,7 @@ namespace PioneerAvrControlLib.Message {
 		}
 		public InputTypeResponse(string message)
 			: base(message) {
-			parameters.Add(message.Substring(Type.ToString().Length, 1));
+			parameters.Add(message.Substring(Type.ToString().Length, 2));
 		}
 		public InputTypeResponse() { }
 	}
@@ -442,41 +463,333 @@ namespace PioneerAvrControlLib.Message {
 		public ListeningModeSet(ListeningMode mode) {
 			parameters.Add(mode.ToString("X2").PadLeft(4, '0'));
 		}
+		public ListeningModeSet() { }
 	}
-	public class ListeningModeRequest : PioneerCommandMessage {
+	public class ListeningModeRequest : PioneerRequestMessage {
 		public override MessageType Type {
 			get { return MessageType.S; }
 		}
 	}
 	public class ListeningModeResponse : PioneerResponseMessage {
 		public override MessageType Type {
-			get { return MessageType.S; }
+			get { return MessageType.SR; }
 		}
 		public ListeningMode Mode {
 			get {
 				return (ListeningMode)int.Parse(parameters[0], NumberStyles.HexNumber);
 			}
 		}
+		public ListeningModeResponse() { }
 		public ListeningModeResponse(string message)
 			: base(message) {
 			parameters.Add(message.Substring(Type.ToString().Length, 4));
 		}
-		public ListeningModeResponse() { }
+		public string ListeningMode {
+			get {
+				int mode = int.Parse(parameters[0], NumberStyles.HexNumber);
+				if (mode == 0x0001) return "STEREO (cyclic)";
+				else if (mode == 0x0010) return "STANDARD";
+				else if (mode == 0x0009) return "STEREO (direct set)";
+				else if (mode == 0x0011) return "(2ch source)";
+				else if (mode == 0x0013) return "PRO LOGIC2 MOVIE";
+				else if (mode == 0x0018) return "PRO LOGIC2x MOVIE";
+				else if (mode == 0x0014) return "PRO LOGIC2 MUSIC";
+				else if (mode == 0x0019) return "PRO LOGIC2x MUSIC";
+				else if (mode == 0x0015) return "PRO LOGIC2 GAME";
+				else if (mode == 0x0020) return "PRO LOGIC2x GAME";
+				else if (mode == 0x0031) return "PRO LOGIC2z HEIGHT";
+				else if (mode == 0x0032) return "WIDE SURROUND MOVIE";
+				else if (mode == 0x0033) return "WIDE SURROUND MUSIC";
+				else if (mode == 0x0012) return "PRO LOGIC";
+				else if (mode == 0x0016) return "Neo:6 CINEMA";
+				else if (mode == 0x0017) return "Neo:6 MUSIC";
+				else if (mode == 0x0028) return "XM HD SURROUND";
+				else if (mode == 0x0029) return "NEURAL SURROUND";
+				else if (mode == 0x0037) return "Neo:X CINEMA";
+				else if (mode == 0x0038) return "Neo:X MUSIC";
+				else if (mode == 0x0039) return "Neo:X GAME";
+				else if (mode == 0x0040) return "NEURAL SURROUND+Neo:X CINEMA";
+				else if (mode == 0x0041) return "NEURAL SURROUND+Neo:X MUSIC";
+				else if (mode == 0x0042) return "NEURAL SURROUND+Neo:X GAME";
+				else if (mode == 0x0021) return "(Multi ch source)";
+				else if (mode == 0x0022) return "(Multi ch source)+DOLBY EX";
+				else if (mode == 0x0023) return "(Multi ch source)+PRO LOGIC2x MOVIE";
+				else if (mode == 0x0024) return "(Multi ch source)+PRO LOGIC2x MUSIC";
+				else if (mode == 0x0034) return "(Multi-ch Source)+PRO LOGIC2z HEIGHT";
+				else if (mode == 0x0035) return "(Multi-ch Source)+WIDE SURROUND MOVIE";
+				else if (mode == 0x0036) return "(Multi-ch Source)+WIDE SURROUND MUSIC";
+				else if (mode == 0x0025) return "(Multi ch source)DTS-ES Neo:6";
+				else if (mode == 0x0026) return "(Multi ch source)DTS-ES matrix";
+				else if (mode == 0x0027) return "(Multi ch source)DTS-ES discrete";
+				else if (mode == 0x0030) return "(Multi ch source)DTS-ES 8ch discrete";
+				else if (mode == 0x0043) return "(Multi ch source)DTS-ES Neo:X";
+				else if (mode == 0x0100) return "ADVANCED SURROUND (cyclic)";
+				else if (mode == 0x0101) return "ACTION";
+				else if (mode == 0x0103) return "DRAMA";
+				else if (mode == 0x0102) return "SCI-FI";
+				else if (mode == 0x0105) return "MONO FILM";
+				else if (mode == 0x0104) return "ENTERTAINMENT SHOW";
+				else if (mode == 0x0106) return "EXPANDED THEATER";
+				else if (mode == 0x0116) return "TV SURROUND";
+				else if (mode == 0x0118) return "ADVANCED GAME";
+				else if (mode == 0x0117) return "SPORTS";
+				else if (mode == 0x0107) return "CLASSICAL";
+				else if (mode == 0x0110) return "ROCK/POP";
+				else if (mode == 0x0109) return "UNPLUGGED";
+				else if (mode == 0x0112) return "EXTENDED STEREO";
+				else if (mode == 0x0003) return "Front Stage Surround Advance Focus";
+				else if (mode == 0x0004) return "Front Stage Surround Advance Wide";
+				else if (mode == 0x0153) return "RETRIEVER AIR";
+				else if (mode == 0x0113) return "PHONES SURROUND";
+				else if (mode == 0x0050) return "THX (cyclic)";
+				else if (mode == 0x0051) return "PROLOGIC + THX CINEMA";
+				else if (mode == 0x0052) return "PL2 MOVIE + THX CINEMA";
+				else if (mode == 0x0053) return "Neo:6 CINEMA + THX CINEMA";
+				else if (mode == 0x0054) return "PL2x MOVIE + THX CINEMA";
+				else if (mode == 0x0092) return "PL2z HEIGHT + THX CINEMA";
+				else if (mode == 0x0055) return "THX SELECT2 GAMES";
+				else if (mode == 0x0068) return "THX CINEMA (for 2ch)";
+				else if (mode == 0x0069) return "THX MUSIC (for 2ch)";
+				else if (mode == 0x0070) return "THX GAMES (for 2ch)";
+				else if (mode == 0x0071) return "PL2 MUSIC + THX MUSIC";
+				else if (mode == 0x0072) return "PL2x MUSIC + THX MUSIC";
+				else if (mode == 0x0093) return "PL2z HEIGHT + THX MUSIC";
+				else if (mode == 0x0073) return "Neo:6 MUSIC + THX MUSIC";
+				else if (mode == 0x0074) return "PL2 GAME + THX GAMES";
+				else if (mode == 0x0075) return "PL2x GAME + THX GAMES";
+				else if (mode == 0x0094) return "PL2z HEIGHT + THX GAMES";
+				else if (mode == 0x0076) return "THX ULTRA2 GAMES";
+				else if (mode == 0x0077) return "PROLOGIC + THX MUSIC";
+				else if (mode == 0x0078) return "PROLOGIC + THX GAMES";
+				else if (mode == 0x0201) return "Neo:X CINEMA + THX CINEMA";
+				else if (mode == 0x0202) return "Neo:X MUSIC + THX MUSIC";
+				else if (mode == 0x0203) return "Neo:X GAME + THX GAMES";
+				else if (mode == 0x0056) return "THX CINEMA (for multi ch)";
+				else if (mode == 0x0057) return "THX SURROUND EX (for multi ch)";
+				else if (mode == 0x0058) return "PL2x MOVIE + THX CINEMA (for multi ch)";
+				else if (mode == 0x0095) return "PL2z HEIGHT + THX CINEMA (for multi ch)";
+				else if (mode == 0x0059) return "ES Neo:6 + THX CINEMA (for multi ch)";
+				else if (mode == 0x0060) return "ES MATRIX + THX CINEMA (for multi ch)";
+				else if (mode == 0x0061) return "ES DISCRETE + THX CINEMA (for multi ch)";
+				else if (mode == 0x0067) return "ES 8ch DISCRETE + THX CINEMA (for multi ch)";
+				else if (mode == 0x0062) return "THX SELECT2 CINEMA (for multi ch)";
+				else if (mode == 0x0063) return "THX SELECT2 MUSIC (for multi ch)";
+				else if (mode == 0x0064) return "THX SELECT2 GAMES (for multi ch)";
+				else if (mode == 0x0065) return "THX ULTRA2 CINEMA (for multi ch)";
+				else if (mode == 0x0066) return "THX ULTRA2 MUSIC (for multi ch)";
+				else if (mode == 0x0079) return "THX ULTRA2 GAMES (for multi ch)";
+				else if (mode == 0x0080) return "THX MUSIC (for multi ch)";
+				else if (mode == 0x0081) return "THX GAMES (for multi ch)";
+				else if (mode == 0x0082) return "PL2x MUSIC + THX MUSIC (for multi ch)";
+				else if (mode == 0x0096) return "PL2z HEIGHT + THX MUSIC (for multi ch)";
+				else if (mode == 0x0083) return "EX + THX GAMES (for multi ch)";
+				else if (mode == 0x0097) return "PL2z HEIGHT + THX GAMES (for multi ch)";
+				else if (mode == 0x0084) return "Neo:6 + THX MUSIC (for multi ch)";
+				else if (mode == 0x0085) return "Neo:6 + THX GAMES (for multi ch)";
+				else if (mode == 0x0086) return "ES MATRIX + THX MUSIC (for multi ch)";
+				else if (mode == 0x0087) return "ES MATRIX + THX GAMES (for multi ch)";
+				else if (mode == 0x0088) return "ES DISCRETE + THX MUSIC (for multi ch)";
+				else if (mode == 0x0089) return "ES DISCRETE + THX GAMES (for multi ch)";
+				else if (mode == 0x0090) return "ES 8CH DISCRETE + THX MUSIC (for multi ch)";
+				else if (mode == 0x0091) return "ES 8CH DISCRETE + THX GAMES (for multi ch)";
+				else if (mode == 0x0204) return "Neo:X + THX CINEMA (for multi ch)";
+				else if (mode == 0x0205) return "Neo:X + THX MUSIC (for multi ch)";
+				else if (mode == 0x0206) return "Neo:X + THX GAMES (for multi ch)";
+				else if (mode == 0x0005) return "AUTO SURR/STREAM DIRECT (cyclic)";
+				else if (mode == 0x0006) return "AUTO SURROUND";
+				else if (mode == 0x0151) return "Auto Level Control (A.L.C.)";
+				else if (mode == 0x0007) return "DIRECT";
+				else if (mode == 0x0008) return "PURE DIRECT";
+				else if (mode == 0x0152) return "OPTIMUM SURROUND";
+				else return "";
+			}
+		}
 	}
-	public class PlayingListeningModeRequest : PioneerCommandMessage {
+	public class PlayingListeningModeRequest : PioneerRequestMessage {
 		public override MessageType Type {
 			get { return MessageType.L; }
 		}
 	}
-	public class PlayingListeningModeRespone : PioneerResponseMessage {
+	public class PlayingListeningModeResponse : PioneerResponseMessage {
 		public override MessageType Type {
 			get { return MessageType.LM; }
 		}
-		public PlayingListeningModeRespone(string message)
+		public PlayingListeningModeResponse() { }
+		public PlayingListeningModeResponse(string message)
 			: base(message) {
 			parameters.Add(message.Substring(Type.ToString().Length, 4));
 		}
-		public PlayingListeningModeRespone() { }
+		public string PlayListeningMode {
+			get {
+				int mode = int.Parse(parameters[0], NumberStyles.HexNumber);
+				if (mode == 0x0101) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0102) return "[)(]PLII MOVIE";
+				else if (mode == 0x0103) return "[)(]PLIIx MUSIC";
+				else if (mode == 0x0104) return "[)(]PLII MUSIC";
+				else if (mode == 0x0105) return "[)(]PLIIx GAME";
+				else if (mode == 0x0106) return "[)(]PLII GAME";
+				else if (mode == 0x0107) return "[)(]PROLOGIC";
+				else if (mode == 0x0108) return "Neo:6 CINEMA";
+				else if (mode == 0x0109) return "Neo:6 MUSIC";
+				else if (mode == 0x010a) return "XM HD Surround";
+				else if (mode == 0x010b) return "NEURAL SURR  ";
+				else if (mode == 0x010c) return "2ch Straight Decode";
+				else if (mode == 0x010d) return "[)(]PLIIz HEIGHT";
+				else if (mode == 0x010e) return "WIDE SURR MOVIE";
+				else if (mode == 0x010f) return "WIDE SURR MUSIC";
+				else if (mode == 0x0110) return "STEREO";
+				else if (mode == 0x0111) return "Neo:X CINEMA";
+				else if (mode == 0x0112) return "Neo:X MUSIC";
+				else if (mode == 0x0113) return "Neo:X GAME";
+				else if (mode == 0x0114) return "NEURAL SURROUND+Neo:X CINEMA";
+				else if (mode == 0x0115) return "NEURAL SURROUND+Neo:X MUSIC";
+				else if (mode == 0x0116) return "NEURAL SURROUND+Neo:X GAMES";
+				else if (mode == 0x1101) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x1102) return "[)(]PLIIx MUSIC";
+				else if (mode == 0x1103) return "[)(]DIGITAL EX";
+				else if (mode == 0x1104) return "DTS +Neo:6 / DTS-HD +Neo:6";
+				else if (mode == 0x1105) return "ES MATRIX";
+				else if (mode == 0x1106) return "ES DISCRETE";
+				else if (mode == 0x1107) return "DTS-ES 8ch ";
+				else if (mode == 0x1108) return "multi ch Straight Decode";
+				else if (mode == 0x1109) return "[)(]PLIIz HEIGHT";
+				else if (mode == 0x110a) return "WIDE SURR MOVIE";
+				else if (mode == 0x110b) return "WIDE SURR MUSIC";
+				else if (mode == 0x110c) return "ES Neo:X";
+				else if (mode == 0x0201) return "ACTION";
+				else if (mode == 0x0202) return "DRAMA";
+				else if (mode == 0x0203) return "SCI-FI";
+				else if (mode == 0x0204) return "MONOFILM";
+				else if (mode == 0x0205) return "ENT.SHOW";
+				else if (mode == 0x0206) return "EXPANDED";
+				else if (mode == 0x0207) return "TV SURROUND";
+				else if (mode == 0x0208) return "ADVANCEDGAME";
+				else if (mode == 0x0209) return "SPORTS";
+				else if (mode == 0x020a) return "CLASSICAL   ";
+				else if (mode == 0x020b) return "ROCK/POP   ";
+				else if (mode == 0x020c) return "UNPLUGGED   ";
+				else if (mode == 0x020d) return "EXT.STEREO  ";
+				else if (mode == 0x020e) return "PHONES SURR. ";
+				else if (mode == 0x020f) return "FRONT STAGE SURROUND ADVANCE FOCUS";
+				else if (mode == 0x0210) return "FRONT STAGE SURROUND ADVANCE WIDE";
+				else if (mode == 0x0211) return "SOUND RETRIEVER AIR";
+				else if (mode == 0x0301) return "[)(]PLIIx MOVIE +THX";
+				else if (mode == 0x0302) return "[)(]PLII MOVIE +THX";
+				else if (mode == 0x0303) return "[)(]PL +THX CINEMA";
+				else if (mode == 0x0304) return "Neo:6 CINEMA +THX";
+				else if (mode == 0x0305) return "THX CINEMA";
+				else if (mode == 0x0306) return "[)(]PLIIx MUSIC +THX";
+				else if (mode == 0x0307) return "[)(]PLII MUSIC +THX";
+				else if (mode == 0x0308) return "[)(]PL +THX MUSIC";
+				else if (mode == 0x0309) return "Neo:6 MUSIC +THX";
+				else if (mode == 0x030a) return "THX MUSIC";
+				else if (mode == 0x030b) return "[)(]PLIIx GAME +THX";
+				else if (mode == 0x030c) return "[)(]PLII GAME +THX";
+				else if (mode == 0x030d) return "[)(]PL +THX GAMES";
+				else if (mode == 0x030e) return "THX ULTRA2 GAMES";
+				else if (mode == 0x030f) return "THX SELECT2 GAMES";
+				else if (mode == 0x0310) return "THX GAMES";
+				else if (mode == 0x0311) return "[)(]PLIIz +THX CINEMA";
+				else if (mode == 0x0312) return "[)(]PLIIz +THX MUSIC";
+				else if (mode == 0x0313) return "[)(]PLIIz +THX GAMES";
+				else if (mode == 0x0314) return "Neo:X CINEMA + THX CINEMA";
+				else if (mode == 0x0315) return "Neo:X MUSIC + THX MUSIC";
+				else if (mode == 0x0316) return "Neo:X GAMES + THX GAMES";
+				else if (mode == 0x1301) return "THX Surr EX";
+				else if (mode == 0x1302) return "Neo:6 +THX CINEMA";
+				else if (mode == 0x1303) return "ES MTRX +THX CINEMA";
+				else if (mode == 0x1304) return "ES DISC +THX CINEMA";
+				else if (mode == 0x1305) return "ES 8ch +THX CINEMA ";
+				else if (mode == 0x1306) return "[)(]PLIIx MOVIE +THX";
+				else if (mode == 0x1307) return "THX ULTRA2 CINEMA";
+				else if (mode == 0x1308) return "THX SELECT2 CINEMA";
+				else if (mode == 0x1309) return "THX CINEMA";
+				else if (mode == 0x130a) return "Neo:6 +THX MUSIC";
+				else if (mode == 0x130b) return "ES MTRX +THX MUSIC";
+				else if (mode == 0x130c) return "ES DISC +THX MUSIC";
+				else if (mode == 0x130d) return "ES 8ch +THX MUSIC";
+				else if (mode == 0x130e) return "[)(]PLIIx MUSIC +THX";
+				else if (mode == 0x130f) return "THX ULTRA2 MUSIC";
+				else if (mode == 0x1310) return "THX SELECT2 MUSIC";
+				else if (mode == 0x1311) return "THX MUSIC";
+				else if (mode == 0x1312) return "Neo:6 +THX GAMES";
+				else if (mode == 0x1313) return "ES MTRX +THX GAMES";
+				else if (mode == 0x1314) return "ES DISC +THX GAMES";
+				else if (mode == 0x1315) return "ES 8ch +THX GAMES";
+				else if (mode == 0x1316) return "[)(]EX +THX GAMES";
+				else if (mode == 0x1317) return "THX ULTRA2 GAMES";
+				else if (mode == 0x1318) return "THX SELECT2 GAMES";
+				else if (mode == 0x1319) return "THX GAMES";
+				else if (mode == 0x131a) return "[)(]PLIIz +THX CINEMA";
+				else if (mode == 0x131b) return "[)(]PLIIz +THX MUSIC";
+				else if (mode == 0x131c) return "[)(]PLIIz +THX GAMES";
+				else if (mode == 0x131d) return "Neo:X + THX CINEMA";
+				else if (mode == 0x131e) return "Neo:X + THX MUSIC";
+				else if (mode == 0x131f) return "Neo:X + THX GAMES";
+				else if (mode == 0x0401) return "STEREO";
+				else if (mode == 0x0402) return "[)(]PLII MOVIE";
+				else if (mode == 0x0403) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0404) return "Neo:6 CINEMA";
+				else if (mode == 0x0405) return "AUTO SURROUND Straight Decode";
+				else if (mode == 0x0406) return "[)(]DIGITAL EX";
+				else if (mode == 0x0407) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0408) return "DTS +Neo:6";
+				else if (mode == 0x0409) return "ES MATRIX";
+				else if (mode == 0x040a) return "ES DISCRETE";
+				else if (mode == 0x040b) return "DTS-ES 8ch ";
+				else if (mode == 0x040c) return "XM HD Surround";
+				else if (mode == 0x040d) return "NEURAL SURR  ";
+				else if (mode == 0x040e) return "RETRIEVER AIR";
+				else if (mode == 0x040f) return "Neo:X CINEMA";
+				else if (mode == 0x0410) return "ES Neo:X";
+				else if (mode == 0x0501) return "STEREO";
+				else if (mode == 0x0502) return "[)(]PLII MOVIE";
+				else if (mode == 0x0503) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0504) return "Neo:6 CINEMA";
+				else if (mode == 0x0505) return "ALC Straight Decode";
+				else if (mode == 0x0506) return "[)(]DIGITAL EX";
+				else if (mode == 0x0507) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0508) return "DTS +Neo:6";
+				else if (mode == 0x0509) return "ES MATRIX";
+				else if (mode == 0x050a) return "ES DISCRETE";
+				else if (mode == 0x050b) return "DTS-ES 8ch ";
+				else if (mode == 0x050c) return "XM HD Surround";
+				else if (mode == 0x050d) return "NEURAL SURR  ";
+				else if (mode == 0x050e) return "RETRIEVER AIR";
+				else if (mode == 0x050f) return "Neo:X CINEMA";
+				else if (mode == 0x0510) return "ES Neo:X";
+				else if (mode == 0x0601) return "STEREO";
+				else if (mode == 0x0602) return "[)(]PLII MOVIE";
+				else if (mode == 0x0603) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0604) return "Neo:6 CINEMA";
+				else if (mode == 0x0605) return "STREAM DIRECT NORMAL Straight Decode";
+				else if (mode == 0x0606) return "[)(]DIGITAL EX";
+				else if (mode == 0x0607) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0608) return "(nothing)";
+				else if (mode == 0x0609) return "ES MATRIX";
+				else if (mode == 0x060a) return "ES DISCRETE";
+				else if (mode == 0x060b) return "DTS-ES 8ch ";
+				else if (mode == 0x060c) return "Neo:X CINEMA";
+				else if (mode == 0x060d) return "ES Neo:X";
+				else if (mode == 0x0701) return "STREAM DIRECT PURE 2ch";
+				else if (mode == 0x0702) return "[)(]PLII MOVIE";
+				else if (mode == 0x0703) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0704) return "Neo:6 CINEMA";
+				else if (mode == 0x0705) return "STREAM DIRECT PURE Straight Decode";
+				else if (mode == 0x0706) return "[)(]DIGITAL EX";
+				else if (mode == 0x0707) return "[)(]PLIIx MOVIE";
+				else if (mode == 0x0708) return "(nothing)";
+				else if (mode == 0x0709) return "ES MATRIX";
+				else if (mode == 0x070a) return "ES DISCRETE";
+				else if (mode == 0x070b) return "DTS-ES 8ch ";
+				else if (mode == 0x070c) return "Neo:X CINEMA";
+				else if (mode == 0x070d) return "ES Neo:X";
+				else if (mode == 0x0881) return "OPTIMUM";
+				else if (mode == 0x0e01) return "HDMI THROUGH";
+				else if (mode == 0x0f01) return "MULTI CH IN";
+				else return "";
+			}
+		}
 	}
 	#endregion
 
@@ -493,6 +806,7 @@ namespace PioneerAvrControlLib.Message {
 		public ToneSet(ToneSetting setting) {
 			parameters.Add(setting.ToString());
 		}
+		public ToneSet() { }
 	}
 	public class ToneRequest : PioneerRequestMessage {
 		public override MessageType Type {
@@ -503,11 +817,18 @@ namespace PioneerAvrControlLib.Message {
 		public override MessageType Type {
 			get { return MessageType.TO; }
 		}
+		public ToneResponse() { }
 		public ToneResponse(string message)
 			: base(message) {
-
+			parameters.Add(message.Substring(Type.ToString().Length, 1));
 		}
-		public ToneResponse() { }
+		public ToneSetting ToneSetting {
+			get {
+				if (parameters[0] == "0") return ToneSetting.Bypass;
+				if (parameters[0] == "1") return ToneSetting.On;
+				else  /* 9 */ return ToneSetting.Tone;
+			}
+		}
 	}
 
 	public class BassIncrement : PioneerCommandMessage {
@@ -530,6 +851,7 @@ namespace PioneerAvrControlLib.Message {
 			else
 				parameters.Add((db + 6).ToString().PadLeft(2, '0'));
 		}
+		public BassSet() { }
 	}
 	public class BassRequest : PioneerRequestMessage {
 		public override MessageType Type {
@@ -572,6 +894,7 @@ namespace PioneerAvrControlLib.Message {
 			else
 				parameters.Add((db - 6).ToString().PadLeft(2, '0'));
 		}
+		public TrebleSet() { }
 	}
 	public class TrebleRequest : PioneerRequestMessage {
 		public override MessageType Type {
@@ -584,7 +907,7 @@ namespace PioneerAvrControlLib.Message {
 		}
 		public int TrebleLevel {
 			get {
-				return int.Parse(parameters[0]) + 6;
+				return int.Parse(parameters[0]) - 6;
 			}
 		}
 		public TrebleResponse(string message)
@@ -633,6 +956,101 @@ namespace PioneerAvrControlLib.Message {
 
 	#region Tuner messages
 
+	public class TunerFreqIncrement : PioneerCommandMessage {
+		public override MessageType Type {
+			get { return MessageType.TFI; }
+		}
+	}
+	public class TunerFreqDecrement : PioneerCommandMessage {
+		public override MessageType Type {
+			get { return MessageType.TFD; }
+		}
+	}
+	public class TunerFreqRequest : PioneerRequestMessage {
+		public override MessageType Type {
+			get { return MessageType.FR; }
+		}
+	}
+	public enum FreqType { AM, FM }
+	public class TunerFreqResponse : PioneerResponseMessage {
+		public override MessageType Type {
+			get { return MessageType.FR; }
+		}
+		public TunerFreqResponse() { }
+		public TunerFreqResponse(string message)
+			: base(message) {
+			parameters.Add(message.Substring(Type.ToString().Length, 1)); // am or fm
+			parameters.Add(message.Substring(Type.ToString().Length + 1, 5)); // freq
+		}
+		public FreqType FreqType { get { return parameters[0] == "A" ? FreqType.AM : FreqType.FM; } }
+		public double Freq { get { return double.Parse(parameters[1]) / 100.0; } }
+	}
+
+	public class TunerPresetIncrement : PioneerCommandMessage {
+		public override MessageType Type {
+			get { return MessageType.TPI; }
+		}
+	}
+	public class TunerPresetDecrement : PioneerCommandMessage {
+		public override MessageType Type {
+			get { return MessageType.TPD; }
+		}
+	}
+	public class TunerPresetRequest : PioneerRequestMessage {
+		public override MessageType Type {
+			get { return MessageType.PR; }
+		}
+	}
+	public class TunerPresetResponse : PioneerResponseMessage {
+		public override MessageType Type {
+			get { return MessageType.PR; }
+		}
+		public TunerPresetResponse() { }
+		public TunerPresetResponse(string message)
+			: base(message) {
+			parameters.Add(message.Substring(Type.ToString().Length, 1)); // class
+			parameters.Add(message.Substring(Type.ToString().Length + 1, 2)); // num
+		}
+		public char Class { get { return parameters[0][0]; } }
+		public int Number { get { return int.Parse(parameters[1]); } }
+	}
+	public enum TunerCommandType {
+		SwitchToFM = 0,
+		SwitchToAM = 1,
+		TunerEdit = 2,
+		TunerEnter = 3,
+		TunerReturn = 4,
+		MpxNoiseCut = 5,
+		Display = 6,
+		PTY_Search = 7
+	}
+	public class TunerCommand : PioneerCommandMessage {
+		public override MessageType Type {
+			get { return MessageType.TN; }
+		}
+		public TunerCommand() { }
+		public TunerCommand(TunerCommandType type) {
+			parameters.Add(((int)type).ToString("d2"));
+		}
+	}
+	public class TunerPresetNamesRequest : PioneerRequestMessage {
+		public override MessageType Type {
+			get { return MessageType.TQ; }
+		}
+	}
+	public class TunerPresetNamesResponse : PioneerResponseMessage {
+		public override MessageType Type {
+			get { return MessageType.TQ; }
+		}
+		public TunerPresetNamesResponse() { }
+		public TunerPresetNamesResponse(string message)
+			: base(message) {
+			parameters.Add(message.Substring(Type.ToString().Length, 2)); // class
+			parameters.Add(message.Substring(Type.ToString().Length + 3, 8)); // num "NAME____"
+		}
+		public string Preset { get { return parameters[0]; } }
+		public string Name { get { return parameters[1]; } }
+	}
 	#endregion
 
 	#region XM radio operation messages (USA model only)
@@ -656,6 +1074,16 @@ namespace PioneerAvrControlLib.Message {
 	#endregion
 
 	#region Error message messages
+	public class CommandOk : PioneerResponseMessage {
+		public override MessageType Type {
+			get { return MessageType.R; }
+		}
+		public override string ToString() {
+			return "Last command succeeded";
+		}
+		public CommandOk(string message) : base(message) { }
+		public CommandOk() { }
+	}
 	public class CommandError : PioneerResponseMessage {
 		public override MessageType Type {
 			get { return MessageType.E04; }
@@ -717,7 +1145,7 @@ namespace PioneerAvrControlLib.Message {
 			get {
 				StringBuilder sb = new StringBuilder();
 				string msg = parameters[1];
-				for (int i = 0; i < msg.Length; i += 2) {
+				for (int i = 0; i < msg.Length - 2; i += 2) {
 					sb.Append(Convert.ToChar(byte.Parse(msg.Substring(i, 2), NumberStyles.HexNumber)));
 				}
 				return sb.ToString();
@@ -762,7 +1190,6 @@ namespace PioneerAvrControlLib.Message {
 
 		}
 	}
-
 	public class InputNameInfoRequest : PioneerRequestMessage {
 		public override MessageType Type {
 			get { return MessageType.RGB; }
