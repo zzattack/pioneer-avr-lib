@@ -44,9 +44,14 @@ namespace PioneerAvrControlLib {
 		}
 
 		public void SendMessage(MessageType type, params object[] args) {
-			PioneerMessage mess = PioneerMessageFactory.Create(type, args);
-			var b = Encoding.Default.GetBytes(mess.Serialize());
-			this.Write(b);
+			byte[] b = null;
+			try {
+				PioneerMessage mess = PioneerMessageFactory.Create(type, args);
+				b = Encoding.Default.GetBytes(mess.Serialize());
+			}
+			catch (ArgumentException) {}
+			if (b != null)
+				Write(b);
 		}
 
 		public void SendMessage(PioneerMessage mess) {

@@ -37,6 +37,10 @@ namespace PioneerAvrControlLib {
 					throw new InvalidProgramException("Type " + t.ToString() + " requires a parameterless public constructor");
 				}
 			}
+			// order all kinds of messages by decreasing length of type descriptor
+			commandMessages  = commandMessages. OrderByDescending(m => m.Type.ToString().Length).ToList();
+			requestMessages  = requestMessages. OrderByDescending(m => m.Type.ToString().Length).ToList();
+			responseMessages = responseMessages.OrderByDescending(m => m.Type.ToString().Length).ToList();
 		}
 
 		public static PioneerMessage Deserialize(List<byte> rawBuff) {
@@ -47,12 +51,18 @@ namespace PioneerAvrControlLib {
 		public static PioneerMessage Deserialize(string msg) {
 			// we can only deserialize responses, never requests or commands
 			if (msg[0] == '?') // ? indicates request message
-				throw new ArgumentException("Cannot deserialize request messages (yet)");
+				return null; // throw new ArgumentException("Cannot deserialize request messages (yet)");
 
 			foreach (PioneerResponseMessage m in responseMessages) {
 				// all response messages start with its .Type identifier
 				if (msg.StartsWith(m.Type.ToString())) {
-					return (PioneerResponseMessage)Activator.CreateInstance(m.GetType(), msg);
+					try {
+						return (PioneerResponseMessage)Activator.CreateInstance(m.GetType(), msg);
+					}
+					// perhaps this messsage seems compatible with what we know, but
+					// it isn't really
+					catch (TargetInvocationException) { }
+					catch (ArgumentException) { }
 				}
 			}
 			// if none found this is probably a response

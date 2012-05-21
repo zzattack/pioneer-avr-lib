@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Net.Sockets;
@@ -8,69 +9,112 @@ using System.Threading;
 
 namespace PioneerAvrControlLib {
 	public class PioneerTCPConnection : PioneerConnection {
-		TcpClient tcp;
-		NetworkStream stream;
-		byte[] readBuf = new byte[1024];
-		string ip;
-		int port;
+		TcpClient _tcp;
+		NetworkStream _stream;
+		readonly byte[] _readBuf = new byte[1024];
+		readonly string _ip;
+		readonly int _port;
 
-		Queue<byte[]> writeBuffer = new Queue<byte[]>();
-		AutoResetEvent writeEvent = new AutoResetEvent(false);
-		Thread writeThread;
+		Queue<byte[]> _writeBuffer = new Queue<byte[]>();
+		AutoResetEvent _writeEvent = new AutoResetEvent(false);
+		Thread _writeThread;
+		private Timer _t;
 
 		public PioneerTCPConnection(string ip, int port = 23) {
-			this.ip = ip;
-			this.port = port;
-			this.tcp = new TcpClient();
-			this.writeThread = new Thread(WriteThread);
-			this.writeThread.Start();
+			_ip = ip;
+			_port = port;
+			_writeThread = new Thread(WriteThread);
+			_writeThread.Start();
 		}
 
 		public override void Open() {
-			tcp.Connect(ip, port);
-			stream = tcp.GetStream();
-			stream.BeginRead(readBuf, 0, readBuf.Length, OnDataReceived, null);
+			try {
+				_tcp = new TcpClient();
+				_tcp.BeginConnect(_ip, _port, OnConnect, null);
+			}
+			catch {
+				ScheduleReconnect();
+			}
+		}
+
+		public void OnConnect(IAsyncResult iar) {
+			try {
+				if (_tcp != null) {
+					_tcp.EndConnect(iar);
+					_stream = _tcp.GetStream();
+					_stream.BeginRead(_readBuf, 0, _readBuf.Length, OnDataReceived, null);
+					_writeEvent.Set();
+				}
+			}
+			catch {
+				ScheduleReconnect();
+			}
 		}
 
 		void OnDataReceived(IAsyncResult r) {
-			int bytesRead;
+			int bytesRead = 0;
 			try {
-				bytesRead = stream.EndRead(r);
+				bytesRead = _stream.EndRead(r);
 			}
-			catch {
-				tcp.Close();
-				stream.Dispose();
-				Open();
-				return;
+			catch (IOException) { }
+			catch (InvalidOperationException) { }
+			if (bytesRead == 0) {
+				if (_stream != null) _stream.Close();
+				if (_tcp != null) _tcp.Close();
+				ScheduleReconnect();
 			}
-			byte[] b = new byte[bytesRead];
-			Array.Copy(readBuf, b, bytesRead);			
-			AddToBuffer(b);
-
-			stream.BeginRead(readBuf, 0, readBuf.Length, OnDataReceived, null);
+			else {
+				byte[] b = new byte[bytesRead];
+				Array.Copy(_readBuf, b, bytesRead);
+				AddToBuffer(b);
+				_stream.BeginRead(_readBuf, 0, _readBuf.Length, OnDataReceived, null);
+			}
 		}
 
-		protected override void Write(IEnumerable<byte> b) {
-			lock (writeBuffer) {
-				writeBuffer.Enqueue(b.ToArray());
+		private void ScheduleReconnect() {
+			// schedule reconnect in 5 seconds
+			if (_stream != null) {
+				_stream.Dispose();
+				_stream = null;
 			}
-			writeEvent.Set();
+			if (_tcp != null && _tcp.Connected) {
+				_tcp.Close();
+			}
+
+			_t = new Timer(delegate {
+				Open();
+			}, null, new TimeSpan(30000000), new TimeSpan(-1));
+		}
+
+
+		protected override void Write(IEnumerable<byte> b) {
+			lock (_writeBuffer) {
+				_writeBuffer.Enqueue(b.ToArray());
+			}
+			_writeEvent.Set();
 		}
 
 		bool die = false;
 		void WriteThread() {
 			while (!die) {
-				writeEvent.WaitOne();
+				_writeEvent.WaitOne();
+
 				bool continueToPush = false;
 				do {
 					byte[] toWrite = null;
-					lock (writeBuffer) {
-						continueToPush = writeBuffer.Count > 0;
+					lock (_writeBuffer) {
+						continueToPush = _writeBuffer.Count > 0;
 						if (continueToPush)
-							toWrite = writeBuffer.Dequeue();
+							toWrite = _writeBuffer.Dequeue();
 					}
-					if (toWrite != null)
-						stream.Write(toWrite, 0, toWrite.Length);
+					if (_stream == null || toWrite == null) continue;
+					try {
+						_stream.Write(toWrite, 0, toWrite.Length);
+					}
+					catch {
+						_stream = null;
+						ScheduleReconnect();
+					}
 				}
 				while (continueToPush);
 			}

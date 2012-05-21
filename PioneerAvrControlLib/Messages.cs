@@ -148,9 +148,9 @@ namespace PioneerAvrControlLib.Message {
 		STS,	// Status display
 		APA,	// Audio parameter
 		VPA,	// Video parameter
-		HM,	// Home menu
-		TQ,	// Tuner preset name
-		SSN, // Hdmi setting
+		HM,	    // Home menu
+		TQ,	    // Tuner preset name
+		SSN,    // Hdmi setting
 		// ------------------------------	
 		R, // Command ok
 		E04, // Command error
@@ -461,7 +461,7 @@ namespace PioneerAvrControlLib.Message {
 			get { return MessageType.SR; }
 		}
 		public ListeningModeSet(ListeningMode mode) {
-			parameters.Add(mode.ToString("X2").PadLeft(4, '0'));
+			parameters.Add(mode.ToString("X").PadLeft(4, '0'));
 		}
 		public ListeningModeSet() { }
 	}
@@ -619,6 +619,11 @@ namespace PioneerAvrControlLib.Message {
 			: base(message) {
 			parameters.Add(message.Substring(Type.ToString().Length, 4));
 		}
+
+		public int PlayListeningModeInt {
+			get { return int.Parse(parameters[0], NumberStyles.HexNumber); }
+		}
+
 		public string PlayListeningMode {
 			get {
 				int mode = int.Parse(parameters[0], NumberStyles.HexNumber);
