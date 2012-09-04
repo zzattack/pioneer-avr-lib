@@ -474,135 +474,139 @@ namespace PioneerAvrControlLib.Message {
 		public override MessageType Type {
 			get { return MessageType.SR; }
 		}
-		public ListeningMode Mode {
-			get {
-				return (ListeningMode)int.Parse(parameters[0], NumberStyles.HexNumber);
-			}
-		}
 		public ListeningModeResponse() { }
 		public ListeningModeResponse(string message)
 			: base(message) {
 			parameters.Add(message.Substring(Type.ToString().Length, 4));
 		}
-		public string ListeningMode {
+		public ListeningMode ListeningMode {
+			get {
+				return (ListeningMode)int.Parse(parameters[0], NumberStyles.HexNumber);
+			}
+		}
+		public string ListeningModeString {
 			get {
 				int mode = int.Parse(parameters[0], NumberStyles.HexNumber);
-				if (mode == 0x0001) return "STEREO (cyclic)";
-				else if (mode == 0x0010) return "STANDARD";
-				else if (mode == 0x0009) return "STEREO (direct set)";
-				else if (mode == 0x0011) return "(2ch source)";
-				else if (mode == 0x0013) return "PRO LOGIC2 MOVIE";
-				else if (mode == 0x0018) return "PRO LOGIC2x MOVIE";
-				else if (mode == 0x0014) return "PRO LOGIC2 MUSIC";
-				else if (mode == 0x0019) return "PRO LOGIC2x MUSIC";
-				else if (mode == 0x0015) return "PRO LOGIC2 GAME";
-				else if (mode == 0x0020) return "PRO LOGIC2x GAME";
-				else if (mode == 0x0031) return "PRO LOGIC2z HEIGHT";
-				else if (mode == 0x0032) return "WIDE SURROUND MOVIE";
-				else if (mode == 0x0033) return "WIDE SURROUND MUSIC";
-				else if (mode == 0x0012) return "PRO LOGIC";
-				else if (mode == 0x0016) return "Neo:6 CINEMA";
-				else if (mode == 0x0017) return "Neo:6 MUSIC";
-				else if (mode == 0x0028) return "XM HD SURROUND";
-				else if (mode == 0x0029) return "NEURAL SURROUND";
-				else if (mode == 0x0037) return "Neo:X CINEMA";
-				else if (mode == 0x0038) return "Neo:X MUSIC";
-				else if (mode == 0x0039) return "Neo:X GAME";
-				else if (mode == 0x0040) return "NEURAL SURROUND+Neo:X CINEMA";
-				else if (mode == 0x0041) return "NEURAL SURROUND+Neo:X MUSIC";
-				else if (mode == 0x0042) return "NEURAL SURROUND+Neo:X GAME";
-				else if (mode == 0x0021) return "(Multi ch source)";
-				else if (mode == 0x0022) return "(Multi ch source)+DOLBY EX";
-				else if (mode == 0x0023) return "(Multi ch source)+PRO LOGIC2x MOVIE";
-				else if (mode == 0x0024) return "(Multi ch source)+PRO LOGIC2x MUSIC";
-				else if (mode == 0x0034) return "(Multi-ch Source)+PRO LOGIC2z HEIGHT";
-				else if (mode == 0x0035) return "(Multi-ch Source)+WIDE SURROUND MOVIE";
-				else if (mode == 0x0036) return "(Multi-ch Source)+WIDE SURROUND MUSIC";
-				else if (mode == 0x0025) return "(Multi ch source)DTS-ES Neo:6";
-				else if (mode == 0x0026) return "(Multi ch source)DTS-ES matrix";
-				else if (mode == 0x0027) return "(Multi ch source)DTS-ES discrete";
-				else if (mode == 0x0030) return "(Multi ch source)DTS-ES 8ch discrete";
-				else if (mode == 0x0043) return "(Multi ch source)DTS-ES Neo:X";
-				else if (mode == 0x0100) return "ADVANCED SURROUND (cyclic)";
-				else if (mode == 0x0101) return "ACTION";
-				else if (mode == 0x0103) return "DRAMA";
-				else if (mode == 0x0102) return "SCI-FI";
-				else if (mode == 0x0105) return "MONO FILM";
-				else if (mode == 0x0104) return "ENTERTAINMENT SHOW";
-				else if (mode == 0x0106) return "EXPANDED THEATER";
-				else if (mode == 0x0116) return "TV SURROUND";
-				else if (mode == 0x0118) return "ADVANCED GAME";
-				else if (mode == 0x0117) return "SPORTS";
-				else if (mode == 0x0107) return "CLASSICAL";
-				else if (mode == 0x0110) return "ROCK/POP";
-				else if (mode == 0x0109) return "UNPLUGGED";
-				else if (mode == 0x0112) return "EXTENDED STEREO";
-				else if (mode == 0x0003) return "Front Stage Surround Advance Focus";
-				else if (mode == 0x0004) return "Front Stage Surround Advance Wide";
-				else if (mode == 0x0153) return "RETRIEVER AIR";
-				else if (mode == 0x0113) return "PHONES SURROUND";
-				else if (mode == 0x0050) return "THX (cyclic)";
-				else if (mode == 0x0051) return "PROLOGIC + THX CINEMA";
-				else if (mode == 0x0052) return "PL2 MOVIE + THX CINEMA";
-				else if (mode == 0x0053) return "Neo:6 CINEMA + THX CINEMA";
-				else if (mode == 0x0054) return "PL2x MOVIE + THX CINEMA";
-				else if (mode == 0x0092) return "PL2z HEIGHT + THX CINEMA";
-				else if (mode == 0x0055) return "THX SELECT2 GAMES";
-				else if (mode == 0x0068) return "THX CINEMA (for 2ch)";
-				else if (mode == 0x0069) return "THX MUSIC (for 2ch)";
-				else if (mode == 0x0070) return "THX GAMES (for 2ch)";
-				else if (mode == 0x0071) return "PL2 MUSIC + THX MUSIC";
-				else if (mode == 0x0072) return "PL2x MUSIC + THX MUSIC";
-				else if (mode == 0x0093) return "PL2z HEIGHT + THX MUSIC";
-				else if (mode == 0x0073) return "Neo:6 MUSIC + THX MUSIC";
-				else if (mode == 0x0074) return "PL2 GAME + THX GAMES";
-				else if (mode == 0x0075) return "PL2x GAME + THX GAMES";
-				else if (mode == 0x0094) return "PL2z HEIGHT + THX GAMES";
-				else if (mode == 0x0076) return "THX ULTRA2 GAMES";
-				else if (mode == 0x0077) return "PROLOGIC + THX MUSIC";
-				else if (mode == 0x0078) return "PROLOGIC + THX GAMES";
-				else if (mode == 0x0201) return "Neo:X CINEMA + THX CINEMA";
-				else if (mode == 0x0202) return "Neo:X MUSIC + THX MUSIC";
-				else if (mode == 0x0203) return "Neo:X GAME + THX GAMES";
-				else if (mode == 0x0056) return "THX CINEMA (for multi ch)";
-				else if (mode == 0x0057) return "THX SURROUND EX (for multi ch)";
-				else if (mode == 0x0058) return "PL2x MOVIE + THX CINEMA (for multi ch)";
-				else if (mode == 0x0095) return "PL2z HEIGHT + THX CINEMA (for multi ch)";
-				else if (mode == 0x0059) return "ES Neo:6 + THX CINEMA (for multi ch)";
-				else if (mode == 0x0060) return "ES MATRIX + THX CINEMA (for multi ch)";
-				else if (mode == 0x0061) return "ES DISCRETE + THX CINEMA (for multi ch)";
-				else if (mode == 0x0067) return "ES 8ch DISCRETE + THX CINEMA (for multi ch)";
-				else if (mode == 0x0062) return "THX SELECT2 CINEMA (for multi ch)";
-				else if (mode == 0x0063) return "THX SELECT2 MUSIC (for multi ch)";
-				else if (mode == 0x0064) return "THX SELECT2 GAMES (for multi ch)";
-				else if (mode == 0x0065) return "THX ULTRA2 CINEMA (for multi ch)";
-				else if (mode == 0x0066) return "THX ULTRA2 MUSIC (for multi ch)";
-				else if (mode == 0x0079) return "THX ULTRA2 GAMES (for multi ch)";
-				else if (mode == 0x0080) return "THX MUSIC (for multi ch)";
-				else if (mode == 0x0081) return "THX GAMES (for multi ch)";
-				else if (mode == 0x0082) return "PL2x MUSIC + THX MUSIC (for multi ch)";
-				else if (mode == 0x0096) return "PL2z HEIGHT + THX MUSIC (for multi ch)";
-				else if (mode == 0x0083) return "EX + THX GAMES (for multi ch)";
-				else if (mode == 0x0097) return "PL2z HEIGHT + THX GAMES (for multi ch)";
-				else if (mode == 0x0084) return "Neo:6 + THX MUSIC (for multi ch)";
-				else if (mode == 0x0085) return "Neo:6 + THX GAMES (for multi ch)";
-				else if (mode == 0x0086) return "ES MATRIX + THX MUSIC (for multi ch)";
-				else if (mode == 0x0087) return "ES MATRIX + THX GAMES (for multi ch)";
-				else if (mode == 0x0088) return "ES DISCRETE + THX MUSIC (for multi ch)";
-				else if (mode == 0x0089) return "ES DISCRETE + THX GAMES (for multi ch)";
-				else if (mode == 0x0090) return "ES 8CH DISCRETE + THX MUSIC (for multi ch)";
-				else if (mode == 0x0091) return "ES 8CH DISCRETE + THX GAMES (for multi ch)";
-				else if (mode == 0x0204) return "Neo:X + THX CINEMA (for multi ch)";
-				else if (mode == 0x0205) return "Neo:X + THX MUSIC (for multi ch)";
-				else if (mode == 0x0206) return "Neo:X + THX GAMES (for multi ch)";
-				else if (mode == 0x0005) return "AUTO SURR/STREAM DIRECT (cyclic)";
-				else if (mode == 0x0006) return "AUTO SURROUND";
-				else if (mode == 0x0151) return "Auto Level Control (A.L.C.)";
-				else if (mode == 0x0007) return "DIRECT";
-				else if (mode == 0x0008) return "PURE DIRECT";
-				else if (mode == 0x0152) return "OPTIMUM SURROUND";
-				else return "";
+				return ListeningModeToString(mode);
 			}
+		}
+
+		public static string ListeningModeToString(int mode) {
+			if (mode == 0x0001) return "STEREO";
+			else if (mode == 0x0010) return "STANDARD";
+			else if (mode == 0x0009) return "STEREO";
+			else if (mode == 0x0011) return "(2ch source)";
+			else if (mode == 0x0013) return "PRO LOGIC2 MOVIE";
+			else if (mode == 0x0018) return "PRO LOGIC2x MOVIE";
+			else if (mode == 0x0014) return "PRO LOGIC2 MUSIC";
+			else if (mode == 0x0019) return "PRO LOGIC2x MUSIC";
+			else if (mode == 0x0015) return "PRO LOGIC2 GAME";
+			else if (mode == 0x0020) return "PRO LOGIC2x GAME";
+			else if (mode == 0x0031) return "PRO LOGIC2z HEIGHT";
+			else if (mode == 0x0032) return "WIDE SURROUND MOVIE";
+			else if (mode == 0x0033) return "WIDE SURROUND MUSIC";
+			else if (mode == 0x0012) return "PRO LOGIC";
+			else if (mode == 0x0016) return "Neo:6 CINEMA";
+			else if (mode == 0x0017) return "Neo:6 MUSIC";
+			else if (mode == 0x0028) return "XM HD SURROUND";
+			else if (mode == 0x0029) return "NEURAL SURROUND";
+			else if (mode == 0x0037) return "Neo:X CINEMA";
+			else if (mode == 0x0038) return "Neo:X MUSIC";
+			else if (mode == 0x0039) return "Neo:X GAME";
+			else if (mode == 0x0040) return "NEURAL SURROUND+Neo:X CINEMA";
+			else if (mode == 0x0041) return "NEURAL SURROUND+Neo:X MUSIC";
+			else if (mode == 0x0042) return "NEURAL SURROUND+Neo:X GAME";
+			else if (mode == 0x0021) return "(Multi ch source)";
+			else if (mode == 0x0022) return "(Multi ch source)+DOLBY EX";
+			else if (mode == 0x0023) return "(Multi ch source)+PRO LOGIC2x MOVIE";
+			else if (mode == 0x0024) return "(Multi ch source)+PRO LOGIC2x MUSIC";
+			else if (mode == 0x0034) return "(Multi-ch Source)+PRO LOGIC2z HEIGHT";
+			else if (mode == 0x0035) return "(Multi-ch Source)+WIDE SURROUND MOVIE";
+			else if (mode == 0x0036) return "(Multi-ch Source)+WIDE SURROUND MUSIC";
+			else if (mode == 0x0025) return "(Multi ch source)DTS-ES Neo:6";
+			else if (mode == 0x0026) return "(Multi ch source)DTS-ES matrix";
+			else if (mode == 0x0027) return "(Multi ch source)DTS-ES discrete";
+			else if (mode == 0x0030) return "(Multi ch source)DTS-ES 8ch discrete";
+			else if (mode == 0x0043) return "(Multi ch source)DTS-ES Neo:X";
+			else if (mode == 0x0100) return "ADVANCED SURROUND (cyclic)";
+			else if (mode == 0x0101) return "ACTION";
+			else if (mode == 0x0103) return "DRAMA";
+			else if (mode == 0x0102) return "SCI-FI";
+			else if (mode == 0x0105) return "MONO FILM";
+			else if (mode == 0x0104) return "ENTERTAINMENT SHOW";
+			else if (mode == 0x0106) return "EXPANDED THEATER";
+			else if (mode == 0x0116) return "TV SURROUND";
+			else if (mode == 0x0118) return "ADVANCED GAME";
+			else if (mode == 0x0117) return "SPORTS";
+			else if (mode == 0x0107) return "CLASSICAL";
+			else if (mode == 0x0110) return "ROCK/POP";
+			else if (mode == 0x0109) return "UNPLUGGED";
+			else if (mode == 0x0112) return "EXTENDED STEREO";
+			else if (mode == 0x0003) return "Front Stage Surround Advance Focus";
+			else if (mode == 0x0004) return "Front Stage Surround Advance Wide";
+			else if (mode == 0x0153) return "RETRIEVER AIR";
+			else if (mode == 0x0113) return "PHONES SURROUND";
+			else if (mode == 0x0050) return "THX (cyclic)";
+			else if (mode == 0x0051) return "PROLOGIC + THX CINEMA";
+			else if (mode == 0x0052) return "PL2 MOVIE + THX CINEMA";
+			else if (mode == 0x0053) return "Neo:6 CINEMA + THX CINEMA";
+			else if (mode == 0x0054) return "PL2x MOVIE + THX CINEMA";
+			else if (mode == 0x0092) return "PL2z HEIGHT + THX CINEMA";
+			else if (mode == 0x0055) return "THX SELECT2 GAMES";
+			else if (mode == 0x0068) return "THX CINEMA (for 2ch)";
+			else if (mode == 0x0069) return "THX MUSIC (for 2ch)";
+			else if (mode == 0x0070) return "THX GAMES (for 2ch)";
+			else if (mode == 0x0071) return "PL2 MUSIC + THX MUSIC";
+			else if (mode == 0x0072) return "PL2x MUSIC + THX MUSIC";
+			else if (mode == 0x0093) return "PL2z HEIGHT + THX MUSIC";
+			else if (mode == 0x0073) return "Neo:6 MUSIC + THX MUSIC";
+			else if (mode == 0x0074) return "PL2 GAME + THX GAMES";
+			else if (mode == 0x0075) return "PL2x GAME + THX GAMES";
+			else if (mode == 0x0094) return "PL2z HEIGHT + THX GAMES";
+			else if (mode == 0x0076) return "THX ULTRA2 GAMES";
+			else if (mode == 0x0077) return "PROLOGIC + THX MUSIC";
+			else if (mode == 0x0078) return "PROLOGIC + THX GAMES";
+			else if (mode == 0x0201) return "Neo:X CINEMA + THX CINEMA";
+			else if (mode == 0x0202) return "Neo:X MUSIC + THX MUSIC";
+			else if (mode == 0x0203) return "Neo:X GAME + THX GAMES";
+			else if (mode == 0x0056) return "THX CINEMA (for multi ch)";
+			else if (mode == 0x0057) return "THX SURROUND EX (for multi ch)";
+			else if (mode == 0x0058) return "PL2x MOVIE + THX CINEMA (for multi ch)";
+			else if (mode == 0x0095) return "PL2z HEIGHT + THX CINEMA (for multi ch)";
+			else if (mode == 0x0059) return "ES Neo:6 + THX CINEMA (for multi ch)";
+			else if (mode == 0x0060) return "ES MATRIX + THX CINEMA (for multi ch)";
+			else if (mode == 0x0061) return "ES DISCRETE + THX CINEMA (for multi ch)";
+			else if (mode == 0x0067) return "ES 8ch DISCRETE + THX CINEMA (for multi ch)";
+			else if (mode == 0x0062) return "THX SELECT2 CINEMA (for multi ch)";
+			else if (mode == 0x0063) return "THX SELECT2 MUSIC (for multi ch)";
+			else if (mode == 0x0064) return "THX SELECT2 GAMES (for multi ch)";
+			else if (mode == 0x0065) return "THX ULTRA2 CINEMA (for multi ch)";
+			else if (mode == 0x0066) return "THX ULTRA2 MUSIC (for multi ch)";
+			else if (mode == 0x0079) return "THX ULTRA2 GAMES (for multi ch)";
+			else if (mode == 0x0080) return "THX MUSIC (for multi ch)";
+			else if (mode == 0x0081) return "THX GAMES (for multi ch)";
+			else if (mode == 0x0082) return "PL2x MUSIC + THX MUSIC (for multi ch)";
+			else if (mode == 0x0096) return "PL2z HEIGHT + THX MUSIC (for multi ch)";
+			else if (mode == 0x0083) return "EX + THX GAMES (for multi ch)";
+			else if (mode == 0x0097) return "PL2z HEIGHT + THX GAMES (for multi ch)";
+			else if (mode == 0x0084) return "Neo:6 + THX MUSIC (for multi ch)";
+			else if (mode == 0x0085) return "Neo:6 + THX GAMES (for multi ch)";
+			else if (mode == 0x0086) return "ES MATRIX + THX MUSIC (for multi ch)";
+			else if (mode == 0x0087) return "ES MATRIX + THX GAMES (for multi ch)";
+			else if (mode == 0x0088) return "ES DISCRETE + THX MUSIC (for multi ch)";
+			else if (mode == 0x0089) return "ES DISCRETE + THX GAMES (for multi ch)";
+			else if (mode == 0x0090) return "ES 8CH DISCRETE + THX MUSIC (for multi ch)";
+			else if (mode == 0x0091) return "ES 8CH DISCRETE + THX GAMES (for multi ch)";
+			else if (mode == 0x0204) return "Neo:X + THX CINEMA (for multi ch)";
+			else if (mode == 0x0205) return "Neo:X + THX MUSIC (for multi ch)";
+			else if (mode == 0x0206) return "Neo:X + THX GAMES (for multi ch)";
+			else if (mode == 0x0005) return "AUTO SURR/STREAM DIRECT (cyclic)";
+			else if (mode == 0x0006) return "AUTO SURROUND";
+			else if (mode == 0x0151) return "Auto Level Control (A.L.C.)";
+			else if (mode == 0x0007) return "DIRECT";
+			else if (mode == 0x0008) return "PURE DIRECT";
+			else if (mode == 0x0152) return "OPTIMUM SURROUND";
+			else return "";
 		}
 	}
 	public class PlayingListeningModeRequest : PioneerRequestMessage {
@@ -620,11 +624,11 @@ namespace PioneerAvrControlLib.Message {
 			parameters.Add(message.Substring(Type.ToString().Length, 4));
 		}
 
-		public int PlayListeningModeInt {
+		public int PlayListeningMode {
 			get { return int.Parse(parameters[0], NumberStyles.HexNumber); }
 		}
 
-		public string PlayListeningMode {
+		public string PlayListeningModeString {
 			get {
 				int mode = int.Parse(parameters[0], NumberStyles.HexNumber);
 				if (mode == 0x0101) return "[)(]PLIIx MOVIE";
