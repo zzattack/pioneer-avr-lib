@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
-using PioneerAvrControlLib.Message;
 
 namespace PioneerAvrControlLib {
 	public static class PioneerMessageFactory {
@@ -50,7 +49,7 @@ namespace PioneerAvrControlLib {
 
 		public static PioneerMessage Deserialize(string msg) {
 			// we can only deserialize responses, never requests or commands
-			if (msg[0] == '?') // ? indicates request message
+			if (msg.Length < 2 || msg[0] == '?') // ? indicates request message
 				return null; // throw new ArgumentException("Cannot deserialize request messages (yet)");
 
 			foreach (PioneerResponseMessage m in responseMessages) {
@@ -88,13 +87,13 @@ namespace PioneerAvrControlLib {
 		}
 
 		internal static MessageType GetTypeForMessage(Type messageType) {
-			foreach (PioneerMessage m in commandMessages)
+			foreach (var m in commandMessages)
 				if (m.GetType() == messageType) return m.Type;
 
-			foreach (PioneerMessage m in requestMessages)
+			foreach (var m in requestMessages)
 				if (m.GetType() == messageType) return m.Type;
 
-			foreach (PioneerMessage m in responseMessages)
+			foreach (var m in responseMessages)
 				if (m.GetType() == messageType) return m.Type;
 
 			throw new ArgumentException("messageType");

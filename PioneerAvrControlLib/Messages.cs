@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Globalization;
 
-namespace PioneerAvrControlLib.Message {
+namespace PioneerAvrControlLib {
 
 	public enum MessageType {
 		// ------------------------------
@@ -67,6 +67,8 @@ namespace PioneerAvrControlLib.Message {
 		APR,	// Zone 2 power  
 		BPR,	// Zone 3 power  
 		ZV,	// Zone 2 volume  
+		ZU,	// Zone 2 volume up 
+		ZD,	// Zone 2 volume down
 		YV,	// Zone 3 volume  
 		Z2MUT,	// Zone 2 mute
 		Z3MUT,	// Zone 3 mute
@@ -204,7 +206,7 @@ namespace PioneerAvrControlLib.Message {
 	public abstract class PioneerCommandMessage : PioneerMessage {
 		public override string Serialize() {
 			// format: <param1><param2>...<type><crlf>
-			StringBuilder sb = new StringBuilder();
+			var sb = new StringBuilder();
 			foreach (string s in parameters)
 				sb.Append(s);
 			sb.Append(this.Type.ToString());
@@ -956,7 +958,50 @@ namespace PioneerAvrControlLib.Message {
 	#endregion
 
 	#region Zone volume messages
-	// TODO
+
+	public class Z2VolumeUp : PioneerCommandMessage {
+		public override MessageType Type {
+			get { return MessageType.ZU; }
+		}
+	}
+	public class Z2VolumeDown : PioneerCommandMessage {
+		public override MessageType Type {
+			get { return MessageType.ZD; }
+		}
+	}
+	public class Z2VolumeSet : PioneerCommandMessage {
+		public override MessageType Type {
+			get { return MessageType.ZV; }
+		}
+		public Z2VolumeSet(int volume)
+			: base() {
+			if (0 > volume || volume > 185)
+				throw new ArgumentException("Volume must be between 0 (-80dB) and 185 (+12dB)");
+			this.parameters.Add(volume.ToString().PadLeft(3, '0'));
+		}
+		public Z2VolumeSet() { }
+	}
+	public class Z2VolumeRequest : PioneerRequestMessage {
+		public override MessageType Type {
+			get { return MessageType.ZV; }
+		}
+	}
+	public class Z2VolumeStatusResponse : PioneerResponseMessage {
+		public override MessageType Type {
+			get { return MessageType.ZV; }
+		}
+		public int Volume {
+			get { return int.Parse(parameters[0]); }
+		}
+		public Z2VolumeStatusResponse(string message)
+			: base(message) {
+			parameters.Add(message.Substring(Type.ToString().Length, 3));
+		}
+		public Z2VolumeStatusResponse() { }
+		public override string ToString() {
+			return "Volume: " + (12.0 - Volume * 0.5).ToString() + "dB";
+		}
+	}
 	#endregion
 
 	#region Zone mute messages

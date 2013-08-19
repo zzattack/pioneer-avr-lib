@@ -33,19 +33,28 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataSources\DataReceivedEventArgs.cs" />
+    <Compile Include="DataSources\DataSource.cs" />
+    <Compile Include="DataSources\NullDataSource.cs" />
+    <Compile Include="DataSources\ReconnectBehavior.cs" />
+    <Compile Include="DataSources\SerialPortDataSource.cs" />
+    <Compile Include="DataSources\TcpClientDataSource.cs" />
+    <Compile Include="DataSources\TcpServerDataSource.cs" />
+    <Compile Include="DataSources\WritableDataSource.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="MessageFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SerialPortConnection.cs" />
     <Compile Include="StringHelper.cs" />
-    <Compile Include="TCPConnection.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
