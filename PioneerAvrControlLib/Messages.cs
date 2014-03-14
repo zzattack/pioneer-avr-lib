@@ -995,7 +995,7 @@ namespace PioneerAvrControlLib {
 		}
 		public Z2VolumeStatusResponse(string message)
 			: base(message) {
-			parameters.Add(message.Substring(Type.ToString().Length, 3));
+			parameters.Add(message.Substring(Type.ToString().Length, 2));
 		}
 		public Z2VolumeStatusResponse() { }
 		public override string ToString() {

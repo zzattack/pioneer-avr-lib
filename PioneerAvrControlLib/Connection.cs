@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using PioneerAvrControlLib.DataSources;
+using System.Threading.Tasks;
+using SPAA05.Shared.DataSources;
 
 namespace PioneerAvrControlLib {
 
@@ -34,12 +36,17 @@ namespace PioneerAvrControlLib {
 
 			ds.ConnectionEstablished += (sender, args) => ConnectionEstablished(sender, args);
 			ds.ConnectionLost += (sender, args) => {
-				ConnectionLost(sender, args);
+				if (ConnectionLost != null)
+					ConnectionLost(sender, args);
 				if (!_die)
 					ConnectNext();
 			};
-			ds.DataReceived += (source, args) => AddToBuffer(args.NewData);
-			ds.Start();
+			ds.ConnectingFailed += (sender, args) => ConnectNext();
+			ds.DataReceived += (source, args) => AddToBuffer(args.Data);
+
+			Debug.WriteLine("Attempting to start datasource " + ds);
+			if (!ds.Start())
+				Task.Delay(1000).ContinueWith(task => ConnectNext()).Start();
 		}
 		public void Dispose() {
 			_die = true;
