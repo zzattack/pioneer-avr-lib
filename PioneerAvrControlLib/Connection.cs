@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +13,7 @@ namespace PioneerAvrControlLib {
 		private readonly List<WritableDataSource> _endPoints;
 		private int currentIdx = -1;
 		private bool _die;
+        private bool _reconnectScheduled = false;
 
 		private WritableDataSource CurrentDataSource {
 			get { return _endPoints[currentIdx]; }
@@ -21,8 +21,14 @@ namespace PioneerAvrControlLib {
 
 		public PioneerConnection(IEnumerable<WritableDataSource> endPoints) {
 			this._endPoints = endPoints.ToList();
-			foreach (var ds in _endPoints)
-				ds.ReconnectBehavior = ReconnectBehavior.Ignore;
+            foreach (var ds in _endPoints) {
+                ds.ReconnectBehavior = ReconnectBehavior.Ignore;
+                ds.ConnectingFailed += ScheduleConnectNext;
+                ds.ConnectionLost += ScheduleConnectNext;
+
+                ds.ConnectionEstablished += OnConnectionEstablished;
+                ds.DataReceived += OnDataReceived;
+            }
 		}
 
 		public void Start() {
@@ -34,26 +40,34 @@ namespace PioneerAvrControlLib {
 			currentIdx = (currentIdx + 1) % _endPoints.Count;
 			var ds = _endPoints[currentIdx];
 
-			ds.ConnectionEstablished += (sender, args) => ConnectionEstablished(sender, args);
-			ds.ConnectionLost += (sender, args) => {
-				if (ConnectionLost != null)
-					ConnectionLost(sender, args);
-				if (!_die)
-					ConnectNext();
-			};
-			ds.ConnectingFailed += (sender, args) => ConnectNext();
-			ds.DataReceived += (source, args) => AddToBuffer(args.Data);
-
-			Debug.WriteLine("Attempting to start datasource " + ds);
-			if (!ds.Start())
-				Task.Delay(1000).ContinueWith(task => ConnectNext()).Start();
+			System.Diagnostics.Debug.WriteLine("Attempting to start datasource " + ds);
+            ds.Start();
 		}
+
 		public void Dispose() {
 			_die = true;
-			foreach (var ds in _endPoints)
-				ds.Dispose();
+            foreach (var ds in _endPoints) {
+                ds.ConnectingFailed -= ScheduleConnectNext;
+                ds.ConnectionLost -= ScheduleConnectNext; 
+                ds.Dispose();
+            }
 		}
+        public void ScheduleConnectNext(object sender, EventArgs args) {
+            if (_die || _reconnectScheduled) return;
+            Task.Delay(1000).ContinueWith(delegate
+            {
+                ConnectNext();
+                _reconnectScheduled = false;
+            });
+            _reconnectScheduled = true;
+        }
+        public void OnConnectionEstablished(object sender, EventArgs args) {
+            if (ConnectionEstablished != null) ConnectionEstablished(sender, args);
+        }
 
+	    private void OnDataReceived(object sender, DataReceivedEventArgs args) {
+            AddToBuffer(args.Data);
+        }
 		#region buffer handling
 
 		readonly List<byte> _rawBuff = new List<byte>();
