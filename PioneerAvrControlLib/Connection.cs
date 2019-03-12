@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SPAA05.Shared.DataSources;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,10 +23,10 @@ namespace PioneerAvrControlLib {
 			this._endPoints = endPoints.ToList();
             foreach (var ds in _endPoints) {
                 ds.ReconnectBehavior = ReconnectBehavior.Ignore;
-                ds.ConnectingFailed += ScheduleConnectNext;
-                ds.ConnectionLost += ScheduleConnectNext;
+				ds.ConnectingFailed += OnConnectingFailed;
+				ds.ConnectionLost += OnConnectionLost;
 
-                ds.ConnectionEstablished += OnConnectionEstablished;
+				ds.ConnectionEstablished += OnConnectionEstablished;
                 ds.DataReceived += OnDataReceived;
             }
 		}
@@ -36,32 +37,59 @@ namespace PioneerAvrControlLib {
 		}
 
 		private void ConnectNext() {
+			DataSource ds;
+			if (currentIdx >= 0) {
+				ds = _endPoints[currentIdx];
+				ds.Stop();
+			}
+
 			currentIdx = (currentIdx + 1) % _endPoints.Count;
-			var ds = _endPoints[currentIdx];
+			ds = _endPoints[currentIdx];
+			ds.Stop();
 
 			System.Diagnostics.Debug.WriteLine("Attempting to start datasource " + ds);
-            ds.Start();
+			ds.Start();
+		}
+
+		public void ForceConnectNext() {
+			ConnectNext();
 		}
 
 		public void Dispose() {
 			_die = true;
             foreach (var ds in _endPoints) {
-                ds.ConnectingFailed -= ScheduleConnectNext;
-                ds.ConnectionLost -= ScheduleConnectNext; 
+                ds.ConnectingFailed -= OnConnectingFailed;
+                ds.ConnectionLost -= OnConnectionLost; 
                 ds.Dispose();
             }
 		}
-        public void ScheduleConnectNext(object sender, EventArgs args) {
+        public async void ScheduleConnectNext() {
             if (_die || _reconnectScheduled) return;
-            Task.Delay(1000).ContinueWith(delegate
-            {
-                ConnectNext();
-                _reconnectScheduled = false;
-            });
-            _reconnectScheduled = true;
+
+			_reconnectScheduled = true;
+			await Task.Delay(1000);
+		    ConnectNext();
+            _reconnectScheduled = false;
         }
-        public void OnConnectionEstablished(object sender, EventArgs args) {
-            if (ConnectionEstablished != null) ConnectionEstablished(sender, args);
+		
+		private void OnConnectionLost(object sender, ConnectionLostArgs e) {
+			var ds = sender as DataSource;
+			System.Diagnostics.Debug.WriteLine("Connection lost on " + ds);
+			if (ds == _endPoints[currentIdx])
+				ScheduleConnectNext();
+		}
+
+		private void OnConnectingFailed(object sender, ConnectingFailedArgs e) {
+			var ds = sender as DataSource;
+			System.Diagnostics.Debug.WriteLine("Connection failed on " + ds);
+			if (ds == _endPoints[currentIdx])
+				ScheduleConnectNext();
+		}
+
+		public void OnConnectionEstablished(object sender, EventArgs args) {
+			DataSource ds = sender as DataSource;
+			System.Diagnostics.Debug.WriteLine("Datasource " + ds + " started successfully");
+			ConnectionEstablished?.Invoke(sender, args);
         }
 
 	    private void OnDataReceived(object sender, DataReceivedEventArgs args) {
@@ -117,6 +145,7 @@ namespace PioneerAvrControlLib {
 			CurrentDataSource.Write(b);
 		}
 		#endregion
+
 	}
 
 	public class MessageReceivedEventArgs : EventArgs {
